@@ -1,0 +1,20 @@
+If Not Exists (Select *
+   From sys.schemas
+   Where name = N'dim'
+   )
+   exec ('Create Schema [dim]');
+Go
+
+If Not Exists (Select *
+   From sys.schemas
+   Where name = N'err'
+   )
+   exec ('Create Schema [err]');
+Go
+
+If Not Exists (Select *
+   From sys.schemas
+   Where name = N'f'
+   )
+   exec ('Create Schema [f]');
+Go

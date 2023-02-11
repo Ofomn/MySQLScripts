@@ -1,0 +1,32 @@
+IF NOT EXISTS (SELECT TABLE_NAME
+            FROM RoadTraffic.INFORMATION_SCHEMA.TABLES    
+            WHERE TABLE_TYPE = 'BASE TABLE' AND TABLE_NAME = 'Direction')
+    execute('CREATE TABLE [dim].[Direction] (
+            [k_Direction_of_travel] smallint NOT NULL,
+            [Direction_of_travel] varchar(50) NULL,
+            [Direction_Name] varchar(50) NULL            
+
+CONSTRAINT PKDirection PRIMARY KEY(k_Direction_of_travel) )');
+GO
+
+-----------------------------------------------------------------
+IF NOT EXISTS (SELECT TABLE_NAME 
+			FROM RoadTraffic.INFORMATION_SCHEMA.TABLES	
+			WHERE TABLE_TYPE = 'BASE TABLE' and
+			TABLE_NAME = 'eDirection')
+
+exec('CREATE TABLE [err].[eDirection](
+	[k_Direction_of_travel] [smallint] NULL,
+	[Direction_of_travel] [varchar](50) NULL,
+	[Direction_Name] [varchar](50) NULL,
+	[Local] [datetime] NULL,
+	[UTC] [datetime] NULL,
+	[Offset] [int] NULL,
+	[ErrorCode] [int] NULL,
+	[ErrorColumn] [int] NULL
+)'
+)
+GO
+
+
+

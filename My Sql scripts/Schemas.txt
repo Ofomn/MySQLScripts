@@ -1,0 +1,141 @@
+go
+IF NOT EXISTS (SELECT TABLE_NAME 
+      FROM RoadTraffic.INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE' and TABLE_NAME = 'Hours'
+) exec('CREATE TABLE [dim].[Hours] (
+    [kHour] bigint NOT NULL,
+    [Hour] bigint,
+    [Time of Day] varchar(15) CONSTRAINT PKHour PRIMARY KEY (kHour ASC)
+)'
+);
+
+
+IF NOT EXISTS (SELECT TABLE_NAME 
+      FROM RoadTraffic.INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE' and TABLE_NAME = 'eHours'
+) exec('CREATE TABLE [err].[eHours] (
+    [kHour] bigint,
+    [Hour] bigint,
+    [Time of Day] varchar(15),
+    LocalTime datetime NULL,
+    UTC datetime NULL,
+    Offset int NULL )'
+);
+Go
+
+
+select ROW_NUMBER() over (order by [hour] asc) + 500  as kHour
+     ,[hour] as [Hour]
+     ,Case 
+          When [hour] = 0  then '00:00-00:59'
+          When [hour] = 1 then '01:00-1:59'
+          When [hour] = 3 then '03:00-03:59'
+          When [hour] = 4 then '04:00-04:59'
+          When [hour] = 5 then '05:00-05:59'
+          When [hour] = 7 then '07:00-07:59'
+          When [hour] = 8 then '08:00-08:59'
+          When [hour] = 9 then '09:00-09:59'
+          When [hour] = 10 then '10:00-10:59'
+          When [hour] = 11 then '11:00-11:59'
+          When [hour] = 12 then '12:00-12:59'
+          When [hour] = 13 then '13:00-13:59'
+          When [hour] = 14 then '14:00-14:59'
+          When [hour] = 15 then '15:00-15:59'
+          When [hour] = 16 then '16:00-16:59'
+          When [hour] = 17 then '17:00-17:59'
+          When [hour] = 18 then '18:00-18:59'
+          else'Err'
+    End    as'Time of Day'
+    ,GETDATE() as 'Local'
+    ,GETDATE() as 'UTC'
+    ,DATEDIFF (hh, GETUTCDATE(), GETDATE()) as 'Offset'
+from stg.Uk_Traffic
+group by [hour]
+
+
+select *
+From stg.Uk_Traffic
+
+select ROW_NUMBER() over (order by Direction_of_travel) + 100 as  'kDirection_of_Travel'
+      ,cast (Direction_of_travel as varchar(1)) as 'DirectionOfTravel'
+      ,Cast (Case
+           When Direction_of_travel= 'S'  Then 'South'
+           When Direction_of_travel= 'W'  Then 'West'
+           When Direction_of_travel= 'J'  Then 'Unknown'
+           When Direction_of_travel= 'E'  Then 'East'
+           When Direction_of_travel= 'C'  Then 'Combined'
+           When Direction_of_travel= 'N'  Then 'North'
+           Else 'Err'
+       End as varchar(10)) as 'DirectionName'
+       ,GETDATE() as 'Local'
+       ,GETDATE() as 'UTC'
+       ,DATEDIFF (hh, GETUTCDATE(), GETDATE()) as 'Offset'
+from stg.Uk_Traffic t   
+group by Direction_of_travel
+
+
+
+
+IF NOT EXISTS (SELECT TABLE_NAME 
+      FROM Staging.INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_TYPE = 'BASE TABLE' and TABLE_NAME = N'Calendar'
+   )
+   exec('CREATE TABLE [dim].[Calendar](
+  [Date] [date] NOT NULL,
+  [Day] [int] NULL,
+  [DayName] [nvarchar](30) NULL,
+  [Week] [int] NULL,
+  [ISOWeek] [int] NULL,
+  [DayOfWeek] [int] NULL,
+  [Month] [int] NULL,
+  [MonthName] [nvarchar](30) NULL,
+  [Quarter] [int] NULL,
+  [Year] [int] NULL,
+  [FirstOfMonth] [date] NULL,
+  [LastOfYear] [date] NULL,
+  [DayOfYear] [int] NULL
+ )'
+);
+
+
+GO
+
+TRUNCATE TABLE dim.Calendar
+GO
+
+DECLARE @StartDate  date = '19990101';
+
+DECLARE @CutoffDate date = DATEADD(DAY, -1, DATEADD(YEAR, 25, @StartDate));
+
+;WITH seq(n) AS 
+(
+  SELECT 0 UNION ALL SELECT n + 1 FROM seq
+  WHERE n < DATEDIFF(DAY, @StartDate, @CutoffDate)
+),
+d(d) AS 
+(
+  SELECT DATEADD(DAY, n, @StartDate) FROM seq
+),
+src AS
+(
+  SELECT
+    Date      = CONVERT(date, d),
+    Day          = DATEPART(DAY,       d),
+    DayName      = DATENAME(WEEKDAY,   d),
+    Week         = DATEPART(WEEK,      d),
+    ISOWeek      = DATEPART(ISO_WEEK,  d),
+    DayOfWeek    = DATEPART(WEEKDAY,   d),
+    Month        = DATEPART(MONTH,     d),
+    MonthName    = DATENAME(MONTH,     d),
+    Quarter      = DATEPART(Quarter,   d),
+    Year         = DATEPART(YEAR,      d),
+    FirstOfMonth = DATEFROMPARTS(YEAR(d), MONTH(d), 1),
+    LastOfYear   = DATEFROMPARTS(YEAR(d), 12, 31),
+    DayOfYear    = DATEPART(DAYOFYEAR, d)
+  FROM d
+)
+INSERT INTO dim.Calendar
+SELECT * 
+FROM src
+ORDER BY Date
+OPTION (MAXRECURSION 0);

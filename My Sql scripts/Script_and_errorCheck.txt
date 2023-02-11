@@ -1,0 +1,96 @@
+SELECT [Count_point_id]
+       ,cal.[Date] as 'kDate'
+      ,d.k_Direction_of_travel
+      ,hr.k_Hour
+      ,la.k_Local_Authority_ID
+      ,rc.[kRoadCategory] as 'k_Road_Category'
+      ,uk.[Latitude]
+      ,uk.[Longitude]
+      ,uk.[Pedal_cycles]
+      ,uk.[Two_wheeled_motor_vehicles]
+      ,uk.[Cars_and_taxis]
+      ,uk.[Buses_and_coaches]
+      ,uk.[LGVs]
+      ,uk.[HGVs_2_rigid_axle]
+      ,uk.[HGVs_3_rigid_axle]
+      ,uk.[HGVs_4_or_more_rigid_axle]
+      ,uk.[HGVs_3_or_4_articulated_axle]
+      ,uk.[HGVs_5_articulated_axle]
+      ,uk.[HGVs_6_articulated_axle]
+      ,uk.[All_HGVs]
+      ,uk.[All_motor_vehicles]
+  FROM [RoadTraffic].[stg].[Uk_Traffic] uk
+       inner join dim.Direction d
+        on d.Direction_of_travel = uk.Direction_of_travel
+	   inner join dim.Calendar cal
+	     on uk.Count_date = cal.Date
+		inner join dim.[Hours] hr
+		  on uk.[hour] = hr.[Hour]
+		inner join dim.LocalAuthority la
+		  on uk.Local_authority_id = la.Local_Authority_ID
+		inner join dim.RoadCategory rc
+		  on uk.Road_category = rc.RoadCategory
+
+
+
+
+
+
+
+ALTER TABLE f.Traffic
+ADD CONSTRAINT fkCalendar FOREIGN KEY (kDate)
+REFERENCES dim.Calendar(kDate);
+
+
+ALTER TABLE f.Traffic
+ADD CONSTRAINT fk_Direction_of_travel FOREIGN KEY (k_Direction_of_travel)
+REFERENCES dim.Direction(k_Direction_of_travel);
+
+
+
+
+
+USE RoadTraffic;
+
+SELECT count(*) as 'DirectionRow'
+FROM dim.Direction;
+
+
+SELECT count(*) as 'errDirectionRow'
+FROM [err].[eDirection];
+
+
+SELECT count(*) as 'LocalAuthoritiesRow'
+FROM [dim].[LocalAuthority];
+
+
+SELECT count(*) as 'errLocalAuthoritiesRow'
+FROM [err].[eLocalAuthority];
+ 
+
+SELECT count(*)as 'HourRow'
+FROM [dim].[Hours];
+
+
+SELECT count(*)as 'errHourRow'
+FROM [err].[eHours];
+
+
+SELECT count(*)as 'RoadCategoryRow'
+FROM [dim].[RoadCategory];
+
+
+SELECT count(*)as 'RoadCategoryRow'
+FROM [err].[eRoadCategory];
+
+
+SELECT count(*) as 'CalendarRow'
+FROM [dim].[Calendar];
+
+
+SELECT count(*) as 'UKTrafficRow'
+FROM [stg].[Uk_Traffic];
+
+
+SELECT count(*) as 'fTrafficRow'
+FROM [f].[traffic];
